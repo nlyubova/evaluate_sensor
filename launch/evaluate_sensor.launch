@@ -1,0 +1,8 @@
+<launch>
+
+  <node pkg="evaluate_sensor" type="evaluate_sensor" name="evaluate_sensor">
+    <param name="depth_img_topic" value="/camera/depth_registered/image_raw" />
+    <!-- <param name="depth_img_topic" value="/softkinetic_camera/depth/image_raw" /> -->
+  </node>
+
+</launch>
