@@ -3,16 +3,14 @@
 #include "evaluate_sensor/evaluate.hpp"
 
 Evaluator::Evaluator():
-  nh_(""),
-  it_(nh_),
-  floatvschar_(false),
-  initialized_(false)
+  nh_("~"),
+  it_(nh_)
 {
   std::string topic_depth_img = "/camera/depth_registered/image_raw";
   nh_.getParam("depth_img_topic", topic_depth_img);
   ROS_INFO_STREAM("topic_depth_img: " << topic_depth_img);
 
-  sub_img_ = it_.subscribe(topic_depth_img, 10, &Evaluator::test, this);
+  sub_img_ = it_.subscribe(topic_depth_img.c_str(), 10, &Evaluator::test, this);
 }
 
 float Evaluator::compute_hist(cv_bridge::CvImagePtr img, const std::vector<float> &mean_val, const int i_min, const int i_max, const int j_min, const int j_max, bool print)
@@ -24,12 +22,18 @@ float Evaluator::compute_hist(cv_bridge::CvImagePtr img, const std::vector<float
     for(int i=i_min; i<i_max; ++i)
       for(int j=j_min; j<j_max; ++j)
       {
+        int ii = i*j;
         float tmp = 0.0;
-        if (floatvschar_)
-          tmp = img->image.at<float>(i*j);
-        else
+        if (img->encoding == sensor_msgs::image_encodings::TYPE_32FC1)
+          tmp = img->image.at<float>(ii);
+        else if (img->encoding == sensor_msgs::image_encodings::TYPE_16UC1)
         {
-          int tmp_int = img->image.at<short int>(i*j);
+          int tmp_int = img->image.at<short int>(ii);
+          tmp = static_cast<float>(tmp_int)/1000.0f;
+        }
+        else if (img->encoding == sensor_msgs::image_encodings::MONO8)
+        {
+          uint8_t tmp_int = img->image.at<uint8_t>(ii);
           tmp = static_cast<float>(tmp_int)/1000.0f;
         }
 
@@ -46,10 +50,10 @@ float Evaluator::compute_hist(cv_bridge::CvImagePtr img, const std::vector<float
   }
 
   //find a bin with most of data
-  int max_count = mean_hist[0];
+  int max_count = 0;
   int max_id = 0;
   for (int i=0; i<=mean_hist.size(); ++i)
-    if (max_count < mean_hist[i])
+    if ((mean_hist[i] > 0) && (max_count < mean_hist[i]))
     {
       max_id = i;
       max_count = mean_hist[i];
@@ -62,12 +66,18 @@ float Evaluator::compute_hist(cv_bridge::CvImagePtr img, const std::vector<float
     for(int i=i_min; i<i_max; i++)
       for(int j=j_min; j<j_max; j++)
       {
+        int ii = i*j;
         float tmp = 0.0;
-        if (floatvschar_)
-          tmp = img->image.at<float>(i*j);
-        else
+        if (img->encoding == sensor_msgs::image_encodings::TYPE_32FC1)
+          tmp = img->image.at<float>(ii);
+        else if (img->encoding == sensor_msgs::image_encodings::TYPE_16UC1)
         {
-          int tmp_int = img->image.at<short int>(i*j);
+          int tmp_int = img->image.at<short int>(ii);
+          tmp = static_cast<float>(tmp_int)/1000.0f;
+        }
+        else if (img->encoding == sensor_msgs::image_encodings::MONO8)
+        {
+          uint8_t tmp_int = img->image.at<uint8_t>(ii);
           tmp = static_cast<float>(tmp_int)/1000.0f;
         }
 
@@ -86,16 +96,22 @@ float Evaluator::compute_stat(cv_bridge::CvImagePtr img, int w, int h)
   float mean = 0.0f;
   float min = std::numeric_limits<float>::max();
   float max = 0.0f;
+  int pixel_nbr = w*h;
 
-  for (int count = 0; count < w*h; ++count)
+  for (int count = 0; count < pixel_nbr; ++count)
   {
-    float tmp = 0.0;
+    float tmp = 0.0f;
 
-    if (floatvschar_)
+    if (img->encoding == sensor_msgs::image_encodings::TYPE_32FC1)
       tmp = img->image.at<float>(count);
-    else
+    else if (img->encoding == sensor_msgs::image_encodings::TYPE_16UC1)
     {
       int tmp_int = img->image.at<short int>(count);
+      tmp = static_cast<float>(tmp_int)/1000.0f;
+    }
+    else if (img->encoding == sensor_msgs::image_encodings::MONO8)
+    {
+      short int tmp_int = img->image.at<short int>(count);
       tmp = static_cast<float>(tmp_int)/1000.0f;
     }
 
@@ -111,17 +127,22 @@ float Evaluator::compute_stat(cv_bridge::CvImagePtr img, int w, int h)
   }
 
   //finalize basic statistics: mean, min, max
-  mean /= (float)nbr;
+  mean /= static_cast<float>(nbr);
   float var = 0.0f;
-  for (int count = 0; count < w*h; ++count)
+  for (int count = 0; count < pixel_nbr; ++count)
   {
-    float tmp = 0.0;
+    float tmp = 0.0f;
 
-    if (floatvschar_)
+    if (img->encoding == sensor_msgs::image_encodings::TYPE_32FC1)
       tmp = img->image.at<float>(count);
-    else
+    else if (img->encoding == sensor_msgs::image_encodings::TYPE_16UC1)
     {
       int tmp_int = img->image.at<short int>(count);
+      tmp = static_cast<float>(tmp_int)/1000.0f;
+    }
+    else if (img->encoding == sensor_msgs::image_encodings::MONO8)
+    {
+      short int tmp_int = img->image.at<short int>(count);
       tmp = static_cast<float>(tmp_int)/1000.0f;
     }
 
@@ -129,6 +150,7 @@ float Evaluator::compute_stat(cv_bridge::CvImagePtr img, int w, int h)
       var += (tmp-mean) * (tmp-mean);
   }
   var /= static_cast<float>(nbr);
+
   //std::cout << "- - - - - time mean var nbr min max " << std::endl;
   std::cout << "- - - - - " << mean << " " << var << " " << nbr << " " << min << " " << max << std::endl;
   return max;
@@ -136,18 +158,16 @@ float Evaluator::compute_stat(cv_bridge::CvImagePtr img, int w, int h)
 
 void Evaluator::test(const sensor_msgs::ImageConstPtr& img)
 {
-  if (!initialized_)
-  {
-    initialized_ = true;
-    if (img->encoding == sensor_msgs::image_encodings::TYPE_32FC1)
-      floatvschar_ = true;
-    //else if (img.encoding == sensor_msgs::image_encodings::TYPE_16UC1)
-  }
+  std::cout << " ** img->encoding = " << img->encoding << std::endl;
 
   cv_bridge::CvImagePtr cv_ptr;
+  //cv_bridge::CvImagePtr cv_ptr2;
+  //cv::Mat cv2;
   try
   {
-    cv_ptr = cv_bridge::toCvCopy(img, img->encoding);
+    cv_ptr = cv_bridge::toCvCopy(img); //sensor_msgs::image_encodings::TYPE_32FC1 //, img->encoding
+    //cv_ptr2 = cv_bridge::cvtColor(cv_ptr, sensor_msgs::image_encodings::TYPE_32FC1);
+    //cv_ptr->image.convertTo(cv_ptr2->image, CV_32FC1);
   }
   catch (cv_bridge::Exception& e)
   {

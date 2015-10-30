@@ -16,13 +16,19 @@ int main(int argc, char **argv)
   ros::init(argc,argv,"evaluate_sensor");
 
   Evaluator fm;
+  //Evaluator *fm = new Evaluator();
 
   /*ros::AsyncSpinner spinner(1);
   spinner.start();*/
 
   ros::Rate rate(10);
   while(ros::ok())
+  {
     ros::spinOnce();
+    rate.sleep();
+  }
+
+  ros::shutdown();
 
   return 0;
 }

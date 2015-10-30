@@ -16,9 +16,6 @@ public:
 
 protected:
   ros::NodeHandle nh_;
-  bool floatvschar_;
-  bool initialized_;
-
   image_transport::ImageTransport it_;
   image_transport::Subscriber sub_img_;
 
