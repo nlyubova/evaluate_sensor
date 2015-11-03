@@ -28,6 +28,7 @@ include_directories(
 SET(SRC
   src/main.cpp
   src/evaluate.cpp
+  src/evaluate_pc.cpp
   include/evaluate_sensor/evaluate.hpp
 )
 

@@ -9,18 +9,26 @@ Evaluator::Evaluator():
   std::string topic_depth_img = "/camera/depth_registered/image_raw";
   nh_.getParam("depth_img_topic", topic_depth_img);
   ROS_INFO_STREAM("topic_depth_img: " << topic_depth_img);
-
   sub_img_ = it_.subscribe(topic_depth_img.c_str(), 10, &Evaluator::test, this);
+
+  /*std::string topic_pointcloud = "/camera/depth_registered/points";
+  nh_.getParam("pointcloud_topic", topic_pointcloud);
+  ROS_INFO_STREAM("pointcloud_topic: " << topic_pointcloud);
+  sub_pc_ = nh_.subscribe(topic_pointcloud.c_str(), 10, &Evaluator::test_pc, this);*/
 }
 
-float Evaluator::compute_hist(cv_bridge::CvImagePtr img, const std::vector<float> &mean_val, const int i_min, const int i_max, const int j_min, const int j_max, bool print)
+float Evaluator::compute_hist(cv_bridge::CvImagePtr img,
+                              const std::vector<float> &mean_val,
+                              const int x_min, const int x_max,
+                              const int y_min, const int y_max,
+                              bool print)
 {
   std::vector<int> mean_hist(mean_val.size()-1, 0);
 
   //compute hist
   for(int k=0; k<mean_val.size()-1; ++k)
-    for(int i=i_min; i<i_max; ++i)
-      for(int j=j_min; j<j_max; ++j)
+    for(int i=x_min; i<x_max; ++i)
+      for(int j=y_min; j<y_max; ++j)
       {
         int ii = i*j;
         float tmp = 0.0;
@@ -63,8 +71,8 @@ float Evaluator::compute_hist(cv_bridge::CvImagePtr img, const std::vector<float
   float mean_temp = 0.0f;
   if (max_count > 0)
   {
-    for(int i=i_min; i<i_max; i++)
-      for(int j=j_min; j<j_max; j++)
+    for(int i=x_min; i<x_max; i++)
+      for(int j=y_min; j<y_max; j++)
       {
         int ii = i*j;
         float tmp = 0.0;
@@ -90,7 +98,8 @@ float Evaluator::compute_hist(cv_bridge::CvImagePtr img, const std::vector<float
   return mean_temp;
 }
 
-float Evaluator::compute_stat(cv_bridge::CvImagePtr img, int w, int h)
+float Evaluator::compute_stat(cv_bridge::CvImagePtr img,
+                              const int &w, const int &h)
 {
   int nbr = 0;
   float mean = 0.0f;
@@ -127,7 +136,9 @@ float Evaluator::compute_stat(cv_bridge::CvImagePtr img, int w, int h)
   }
 
   //finalize basic statistics: mean, min, max
-  mean /= static_cast<float>(nbr);
+  if (nbr > 0)
+    mean /= static_cast<float>(nbr);
+
   float var = 0.0f;
   for (int count = 0; count < pixel_nbr; ++count)
   {
@@ -158,16 +169,37 @@ float Evaluator::compute_stat(cv_bridge::CvImagePtr img, int w, int h)
 
 void Evaluator::test(const sensor_msgs::ImageConstPtr& img)
 {
-  std::cout << " ** img->encoding = " << img->encoding << std::endl;
+  //std::cout << " ** img->encoding = " << img->encoding << std::endl;
 
   cv_bridge::CvImagePtr cv_ptr;
   //cv_bridge::CvImagePtr cv_ptr2;
   //cv::Mat cv2;
+  cv::Mat out;
+  out.create(cv::Size(img->height, img->width), CV_32FC1);
+
   try
   {
     cv_ptr = cv_bridge::toCvCopy(img); //sensor_msgs::image_encodings::TYPE_32FC1 //, img->encoding
     //cv_ptr2 = cv_bridge::cvtColor(cv_ptr, sensor_msgs::image_encodings::TYPE_32FC1);
     //cv_ptr->image.convertTo(cv_ptr2->image, CV_32FC1);
+
+
+    if (img->encoding == sensor_msgs::image_encodings::TYPE_32FC1)
+    {
+      cv_ptr->image.convertTo(out, CV_32FC1);
+    }
+    else if (img->encoding == sensor_msgs::image_encodings::TYPE_16UC1)
+    {
+      cv_ptr->image.convertTo(out, CV_32FC1, 1 / 1000.0); //convert to float so that it is in meters
+      cv::Mat valid_mask = cv_ptr->image == std::numeric_limits<uint16_t>::min(); // Should we do std::numeric_limits<uint16_t>::max() too ?
+      out.setTo(std::numeric_limits<float>::quiet_NaN(), valid_mask); //set a$
+    }
+    else if (img->encoding == sensor_msgs::image_encodings::MONO8)
+    {
+      cv_ptr->image.convertTo(out, CV_32FC1, 1 / 1000.0); //convert to float so that it is in meters
+      cv::Mat valid_mask = cv_ptr->image == std::numeric_limits<uint8_t>::min();
+      out.setTo(std::numeric_limits<float>::quiet_NaN(), valid_mask);
+    }
   }
   catch (cv_bridge::Exception& e)
   {
@@ -193,7 +225,7 @@ void Evaluator::test(const sensor_msgs::ImageConstPtr& img)
     std::cout << *it << " ";
   std::cout << std::endl;*/
 
-  std::vector<float> mean_corners(mean_val.size()-1, 0.0);
+  std::vector<float> mean_corners(mean_val.size()-1, 0.0f);
 
   //compute the histogram for the corners
   mean_corners[0] = compute_hist(cv_ptr, mean_val, 0, w/3, h/3*2, h);
@@ -207,10 +239,10 @@ void Evaluator::test(const sensor_msgs::ImageConstPtr& img)
 
   //compute the histogram for the whole image
   std::vector<float> test_val;
-  test_val.resize(51);
+  test_val.resize(45);
+  float val = 0.1f;
   for (int i=0; i<test_val.size();++i)
-    test_val[i] = 1.0f * static_cast<float>(i)/test_val.size();
-  test_val[0] = 0.12f;
+    test_val[i] = val + (1.0f-val) * static_cast<float>(i)/static_cast<float>(test_val.size());
   std::cout << "Histogram bins: ";
   for (std::vector<float>::iterator it=test_val.begin(); it!=test_val.end(); ++it)
     std::cout << *it << " ";
