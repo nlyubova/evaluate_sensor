@@ -4,9 +4,12 @@
     <!-- <param name="depth_img_topic" value="/camera/depth_registered/image_raw" /> -->
     <!-- <param name="depth_img_topic" value="/softkinetic_camera/depth/image_raw" /> -->
     <!-- <param name="depth_img_topic" value="/camera/depth/image_raw" /> -->
-    <param name="depth_img_topic" value="/camera/depth/image_raw" />
-    <!-- topic_pointcloud = "/camera/depth/points"; -->
+    <!-- <param name="depth_img_topic" value="/camera/depth/image_raw" /> -->
+    <param name="depth_img_topic" value="/CameraF200/depth/image_raw" />
+    
     <!-- topic_pointcloud = "/softkinetic_camera/points"; -->
+    <param name="pointcloud_topic" value="/camera/depth/points" />
+    <!-- <param name="pointcloud_topic" value="/CameraF200/depth/points" /> -->
   </node>
 
 </launch>
