@@ -52,11 +52,13 @@ SET(SRC
   src/evaluate_depth.cpp
   src/ardetection.cpp
   src/plane_fitting.cpp
+  src/arprocess.cpp
   include/evaluate_sensor/evaluate.hpp
   include/evaluate_sensor/evaluate_depth.hpp
   include/evaluate_sensor/evaluate_pc.hpp
   include/evaluate_sensor/ardetection.hpp
   include/evaluate_sensor/plane_fitting.hpp
+  include/evaluate_sensor/arprocess.hpp
 )
 
 add_executable(${PROJECTNAME} ${SRC})

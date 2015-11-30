@@ -22,6 +22,8 @@ void Evaluator::process_cameraInfo(const sensor_msgs::CameraInfoConstPtr& infoMs
   ar_left_.setCamInfo(camMatrix, distCoeffs, infoMsg->header.frame_id);
   ar_right_.setCamInfo(camMatrix, distCoeffs, infoMsg->header.frame_id);
 
+  ar_right.setCamInfo(camMatrix, distCoeffs, cv::Size(infoMsg->height, infoMsg->width), infoMsg->header.frame_id);
+
   //unsubscribe from teh topic
   sub_camera_info_.shutdown();
 }

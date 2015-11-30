@@ -17,6 +17,8 @@
 #include "evaluate_sensor/evaluate_depth.hpp"
 #include "evaluate_sensor/evaluate_pc.hpp"
 
+#include "evaluate_sensor/arprocess.hpp"
+
 class Evaluator
 {
 public:
@@ -39,6 +41,7 @@ protected:
   pose_left_pub, pose_right_pub;
 
   Ardetector ar_left_, ar_right_;
+  ArProcessor ar_right;
 
   Evaluator_depth evaluator_depth_;
   Evaluator_pc evaluator_pc_;
