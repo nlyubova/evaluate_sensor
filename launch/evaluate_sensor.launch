@@ -1,6 +1,6 @@
 <launch>
-  <arg name="camera" default="CameraF200" />
-  <!-- <arg name="camera" default="camera" /> -->
+  <!-- <arg name="camera" default="CameraF200" /> -->
+  <arg name="camera" default="camera" />
   <!-- <arg name="camera" default="softkinetic_camera" /> -->
 
   <node pkg="evaluate_sensor" type="evaluate_sensor" name="evaluate_sensor" output="screen" cwd="node">
@@ -12,7 +12,7 @@
     <param name="rgb_img_topic" value="/$(arg camera)/rgb/image_raw" />
     <!-- <param name="rgb_img_topic" value="/$(arg camera)/rgb/image_color" /> -->
 
-    <param name="pointcloud_topic" value="/$(arg camera)/depth/points" /> -->
+    <param name="pointcloud_topic" value="/$(arg camera)/depth/points" />
     <!-- <param name="pointcloud_topic" value="/$(arg camera)/depth_registered/points" /> -->
 
     <param name="camera_info_topic" value="/$(arg camera)/depth/camera_info" />
