@@ -29,8 +29,10 @@ void Evaluator_depth::compute_plane(cv_bridge::CvImagePtr img,
 
 float Evaluator_depth::compute_hist(cv_bridge::CvImagePtr img,
                               const std::vector<float> &mean_val,
-                              const int x_min, const int x_max,
-                              const int y_min, const int y_max,
+                              const int x_min,
+                              const int x_max,
+                              const int y_min,
+                              const int y_max,
                               bool print)
 {
   std::vector<int> mean_hist(mean_val.size()-1, 0);
@@ -109,7 +111,8 @@ float Evaluator_depth::compute_hist(cv_bridge::CvImagePtr img,
 }
 
 float Evaluator_depth::compute_stat(cv_bridge::CvImagePtr img,
-                              const int &w, const int &h)
+                                    const int &w,
+                                    const int &h)
 {
   int nbr = 0;
   float mean = 0.0f;
@@ -173,11 +176,15 @@ float Evaluator_depth::compute_stat(cv_bridge::CvImagePtr img,
   var /= static_cast<float>(nbr);
 
   //std::cout << "- - - - - time mean var nbr min max " << std::endl;
-  std::cout << "stat from_depthimg: " << mean << " " << var << " " << nbr << " " << min << " " << max << std::endl;
+  std::cout << "stat from_depthimg: " << mean << " " << var << " "
+    << nbr << " " << min << " " << max << std::endl;
   return max;
 }
 
-void Evaluator_depth::test_corners(cv_bridge::CvImagePtr cv_ptr, const int &w, const int &h, const int &max)
+void Evaluator_depth::test_corners(cv_bridge::CvImagePtr cv_ptr,
+                                   const int &w,
+                                   const int &h,
+                                   const int &max)
 {
   std::vector<float> mean_val;
   mean_val.push_back(0.12f);
@@ -204,7 +211,10 @@ void Evaluator_depth::test_corners(cv_bridge::CvImagePtr cv_ptr, const int &w, c
   std::cout << std::endl;
 }
 
-void Evaluator_depth::test_hist(cv_bridge::CvImagePtr cv_ptr, const int &w, const int &h, const int &bins)
+void Evaluator_depth::test_hist(cv_bridge::CvImagePtr cv_ptr,
+                                const int &w,
+                                const int &h,
+                                const int &bins)
 {
   std::vector<float> test_val;
   test_val.resize(bins);
@@ -221,9 +231,12 @@ void Evaluator_depth::test_hist(cv_bridge::CvImagePtr cv_ptr, const int &w, cons
 }
 
 
-void Evaluator_depth::test_temp(cv_bridge::CvImagePtr img, const int &w, const int &h)
+void Evaluator_depth::test_temp(cv_bridge::CvImagePtr img,
+                                const int &w,
+                                const int &h)
 {
-  float noise = 0.0f;
+  //average noise per pixel
+  float noise(0.0f);
   if (imgPrev.empty())
   {
     img->image.copyTo(imgPrev);
@@ -231,13 +244,13 @@ void Evaluator_depth::test_temp(cv_bridge::CvImagePtr img, const int &w, const i
   }
   else
   {
-    tempNoise += imgPrev - img->image;
+    tempNoise += (imgPrev - img->image);
 
-    int nbr = 0;
+    int nbr(0);
     int pixel_nbr = w*h;
     for (int count = 0; count < pixel_nbr; ++count)
     {
-      float tmp = 0.0f;
+      float tmp(0.0f);
 
       if (img->encoding == sensor_msgs::image_encodings::TYPE_32FC1)
         tmp = tempNoise.at<float>(count);
@@ -259,16 +272,15 @@ void Evaluator_depth::test_temp(cv_bridge::CvImagePtr img, const int &w, const i
       }
     }
     noise /= static_cast<float>(nbr);
-    noiseTemp_.push_back(noise); //TODO, check size
 
-    float noiseMean = 0.0;
-    for (int i = 0; i < noiseTemp_.size(); ++i)
-      noiseMean += noiseTemp_[i];
-    noiseMean /= noiseTemp_.size();
+    if (noiseTemp_.size() < 100)
+      noiseTemp_.push_back(noise);
 
-    std::cout << "Temporal noise = " << noise << " / " << noiseMean << std::endl;
+    //average to the number of cumulated images
+    if (noiseTemp_.size() > 0)
+      noise /= static_cast<float>(noiseTemp_.size());
+
+    std::cout << "Temporal noise per pixel,m= " << noise << " at iteration " << noiseTemp_.size() << std::endl;
   }
-
-  //cv::imshow("temp noise", tempNoise);
 }
 

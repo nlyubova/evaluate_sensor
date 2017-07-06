@@ -32,6 +32,7 @@ private:
   std::string tiltingFrameId_;
 
   std::vector <double> dst_mean_;
+
   std::vector <double> dst_std_;
 };
 

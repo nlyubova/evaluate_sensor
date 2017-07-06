@@ -13,19 +13,24 @@ class Ardetector
 {
 public:
   Ardetector(const int &dictionaryId, const cv::Scalar &color);
+
   void init(const std::string &detector_params_file);
 
   void detectBoard(cv_bridge::CvImagePtr &img);
-  bool detectMarkers(cv_bridge::CvImagePtr &img, tf::Transform &transform);
+
+  bool detectMarkers(cv_bridge::CvImagePtr &img,
+                     tf::Transform &transform);
 
   void createBoard();
+
   void createMarker();
 
   void setCamInfo(const cv::Mat &camMatrix,
-                              const cv::Mat &distCoeffs,
-                              const std::string &frame_name);
+                  const cv::Mat &distCoeffs,
+                  const std::string &frame_name);
 
-  tf::Transform getPose(const cv::Vec3d &rvec, const cv::Vec3d &vvec);
+  tf::Transform getPose(const cv::Vec3d &rvec,
+                        const cv::Vec3d &vvec);
 
 private:
   const bool refindStrategy;
@@ -46,6 +51,7 @@ private:
   std::string frame_name_;
 
   cv::aruco::Dictionary dictionary;
+
   cv::aruco::CharucoBoard board;
 
   cv::aruco::DetectorParameters detectorParams;

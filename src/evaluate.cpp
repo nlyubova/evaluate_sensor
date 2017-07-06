@@ -19,10 +19,11 @@ void Evaluator::process_cameraInfo(const sensor_msgs::CameraInfoConstPtr& infoMs
                         infoMsg->D[3],
                         infoMsg->D[4]);
 
-  ar_left_.setCamInfo(camMatrix, distCoeffs, infoMsg->header.frame_id);
-  ar_right_.setCamInfo(camMatrix, distCoeffs, infoMsg->header.frame_id);
+  //ar_left_.setCamInfo(camMatrix, distCoeffs, infoMsg->header.frame_id);
+  //ar_right_.setCamInfo(camMatrix, distCoeffs, infoMsg->header.frame_id);
 
-  ar_right.setCamInfo(camMatrix, distCoeffs, cv::Size(infoMsg->height, infoMsg->width), infoMsg->header.frame_id);
+//  ar_left.setCamInfo(camMatrix, distCoeffs, cv::Size(infoMsg->height, infoMsg->width), infoMsg->header.frame_id);
+//  ar_right.setCamInfo(camMatrix, distCoeffs, cv::Size(infoMsg->height, infoMsg->width), infoMsg->header.frame_id);
 
   //unsubscribe from teh topic
   sub_camera_info_.shutdown();
@@ -31,8 +32,10 @@ void Evaluator::process_cameraInfo(const sensor_msgs::CameraInfoConstPtr& infoMs
 Evaluator::Evaluator():
   nh_("~"),
   it_(nh_),
-  ar_left_(cv::aruco::DICT_4X4_50, cv::Scalar(0, 255, 0)),
-  ar_right_(cv::aruco::DICT_5X5_50, cv::Scalar(0, 0, 255)),
+  //ar_left(),
+  //ar_right(),
+  //ar_left_(cv::aruco::DICT_4X4_50, cv::Scalar(0, 255, 0)),
+  //ar_right_(cv::aruco::DICT_5X5_50, cv::Scalar(0, 0, 255)),
   processedDepth_(0),
   processedPc_(0),
   processMax_(10)
@@ -58,7 +61,7 @@ Evaluator::Evaluator():
   std::string topic_depth_img = "/camera/depth/image_raw";
   nh_.getParam("depth_img_topic", topic_depth_img);
   ROS_INFO_STREAM("topic_depth_img: " << topic_depth_img);
-  //sub_img_depth_ = it_.subscribe(topic_depth_img.c_str(), 10, &Evaluator::process_depth, this);
+  sub_img_depth_ = it_.subscribe(topic_depth_img.c_str(), 10, &Evaluator::process_depth, this);
 
   std::string topic_rgb_img = "/camera/rgb/image_raw";
   nh_.getParam("rgb_img_topic", topic_rgb_img);
@@ -78,8 +81,6 @@ Evaluator::Evaluator():
 
 void Evaluator::process_rgb(const sensor_msgs::ImageConstPtr& img)
 {
-  //std::cout << "Rgb image type, size: " << img->encoding << " " << img->width << "x" << img->height << std::endl;
-
   cv_bridge::CvImagePtr cv_ptr;
   try
   {
@@ -95,27 +96,36 @@ void Evaluator::process_rgb(const sensor_msgs::ImageConstPtr& img)
   geometry_msgs::PoseStamped pose;
   pose.header.stamp = ros::Time::now();
   pose.header.frame_id = img->header.frame_id;
-  geometry_msgs::PoseStamped pose_left(pose), pose_right(pose);
+  /*geometry_msgs::PoseStamped pose_left(pose), pose_right(pose);
 
-  tf::Transform transform_left;
-  if(ar_left_.detectMarkers(cv_ptr, transform_left))
+  tf::Transform transform_left;*/
+  /*if(ar_left_.detectMarkers(cv_ptr, transform_left))
   {
     tf::poseTFToMsg(transform_left, pose_left.pose);
     pose_left_pub.publish(pose_left);
-  }
+  }*/
+/*  if(ar_left.detectMarkers(cv_ptr, transform_left))
+  {
+    tf::poseTFToMsg(transform_left, pose_left.pose);
+    pose_left_pub.publish(pose_left);
+  }*/
 
-  tf::Transform transform_right;
+  /*tf::Transform transform_right;
   if(ar_right_.detectMarkers(cv_ptr, transform_right))
   {
     tf::poseTFToMsg(transform_right, pose_right.pose);
     pose_right_pub.publish(pose_right);
   }
+  if(ar_right.detectMarkers(cv_ptr, transform_right))
+  {
+    tf::poseTFToMsg(transform_right, pose_right.pose);
+    pose_right_pub.publish(pose_right);
+  }*/
 
   cv::imshow("AR detection", cv_ptr->image);
   cv::waitKey(1);
 
   //std::cout << transform_left.getOrigin() - transform_right.getOrigin() << std::endl;
-
 
   //ardetector.detectBoard(cv_ptr);
 }
@@ -129,7 +139,6 @@ void Evaluator::process_pc(const sensor_msgs::PointCloud2& msg)
 
   sensor_msgs::PointCloud2 msg2 = msg;
 
-  //std::cerr << "Point cloud size: "	<< msg.width << "x" << msg.height << std::endl;
   int w = msg.width;
   int h = msg.height;
   int points_nbr = 0;
@@ -141,17 +150,17 @@ void Evaluator::process_pc(const sensor_msgs::PointCloud2& msg)
   evaluator_pc_.test_corners(msg2, w, h, max);
 
   //3) compute the histogram for the whole image
-  evaluator_pc_.test_hist(msg2, w, h, 45, points_nbr);
+  evaluator_pc_.test_hist(msg2, w, h, 0.02f, points_nbr);
 
   //4) fitting a plane
-  sensor_msgs::PointCloud2::Ptr final_cloud;
+  /*sensor_msgs::PointCloud2::Ptr final_cloud;
   geometry_msgs::PoseStamped pose;
   pose.header.frame_id = msg.header.frame_id;
   evaluator_pc_.compute_plane(msg2, final_cloud, pose);
   // Publish the data
   if (final_cloud->data.size() > 0)
     pub.publish(final_cloud); // publish the new pcl
-  pub_plane_norm.publish(pose);
+  pub_plane_norm.publish(pose);*/
 }
 
 void Evaluator::process_depth(const sensor_msgs::ImageConstPtr& msg)
@@ -169,9 +178,7 @@ void Evaluator::process_depth(const sensor_msgs::ImageConstPtr& msg)
   cv_bridge::CvImagePtr cv_ptr;
   try
   {
-    cv_ptr = cv_bridge::toCvCopy(msg, msg->encoding); //sensor_msgs::image_encodings::TYPE_32FC1); //,
-    //cv_ptr2 = cv_bridge::cvtColor(cv_ptr, sensor_msgs::image_encodings::TYPE_32FC1);
-    //cv_ptr->image.convertTo(cv_ptr2->image, CV_32FC1);
+    cv_ptr = cv_bridge::toCvCopy(msg, msg->encoding);
   }
   catch (cv_bridge::Exception& e)
   {
@@ -187,13 +194,16 @@ void Evaluator::process_depth(const sensor_msgs::ImageConstPtr& msg)
     }
     else if (msg->encoding == sensor_msgs::image_encodings::TYPE_16UC1)
     {
-      cv_ptr->image.convertTo(out, CV_32FC1, 1 / 1000.0); //convert to float so that it is in meters
-      cv::Mat valid_mask = cv_ptr->image == std::numeric_limits<uint16_t>::min(); // Should we do std::numeric_limits<uint16_t>::max() too ?
-      out.setTo(std::numeric_limits<float>::quiet_NaN(), valid_mask); //set a$
+      //convert to float so that it is in meters
+      cv_ptr->image.convertTo(out, CV_32FC1, 1 / 1000.0);
+      // Should we do std::numeric_limits<uint16_t>::max()?
+      cv::Mat valid_mask = cv_ptr->image == std::numeric_limits<uint16_t>::min();
+      out.setTo(std::numeric_limits<float>::quiet_NaN(), valid_mask);
     }
     else if (msg->encoding == sensor_msgs::image_encodings::MONO8)
     {
-      cv_ptr->image.convertTo(out, CV_32FC1, 1 / 1000.0); //convert to float so that it is in meters
+      //convert to float so that it is in meters
+      cv_ptr->image.convertTo(out, CV_32FC1, 1 / 1000.0);
       cv::Mat valid_mask = cv_ptr->image == std::numeric_limits<uint8_t>::min();
       out.setTo(std::numeric_limits<float>::quiet_NaN(), valid_mask);
     }
@@ -222,10 +232,11 @@ void Evaluator::process_depth(const sensor_msgs::ImageConstPtr& msg)
   evaluator_depth_.test_hist(cv_ptr, w, h, 45);
 
   //4) fitting a plane
-  /*sensor_msgs::PointCloud2::Ptr final_cloud;
+/*  sensor_msgs::PointCloud2::Ptr final_cloud;
   geometry_msgs::PoseStamped pose;
   pose.header.frame_id = msg->header.frame_id;
-  evaluator_depth_.compute_plane(cv_ptr, final_cloud, pose);*/
+  evaluator_depth_.compute_plane(cv_ptr, final_cloud, pose);
+*/
 
   //5) compute temporal noise
   evaluator_depth_.test_temp(cv_ptr, w, h);

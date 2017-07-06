@@ -6,7 +6,8 @@ ArProcessor::ArProcessor():
 }
 
 
-bool ArProcessor::detectMarkers(cv_bridge::CvImagePtr &img, tf::Transform &transform)
+bool ArProcessor::detectMarkers(cv_bridge::CvImagePtr &img,
+                                tf::Transform &transform)
 {
 
   //detection results will go into "markers"

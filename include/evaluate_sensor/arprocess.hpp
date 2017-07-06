@@ -14,14 +14,18 @@ class ArProcessor
 {
 public:
   ArProcessor();
-  bool detectMarkers(cv_bridge::CvImagePtr &img, tf::Transform &transform);
+  bool detectMarkers(cv_bridge::CvImagePtr &img,
+                     tf::Transform &transform);
+
   void setCamInfo(const cv::Mat &camMatrix,
-                              const cv::Mat &distCoeffs,
-                              cv::Size size,
-                              const std::string &frame_name);
+                  const cv::Mat &distCoeffs,
+                  cv::Size size,
+                  const std::string &frame_name);
 
   aruco::MarkerDetector mDetector;
+
   vector<aruco::Marker> markers;
+
   aruco::CameraParameters camParam;
 
 private:

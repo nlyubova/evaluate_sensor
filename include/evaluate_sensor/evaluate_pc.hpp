@@ -16,18 +16,28 @@ public:
   Evaluator_pc();
 
   float compute_stat(sensor_msgs::PointCloud2 &msg,
-                     const int &w, const int &h,
+                     const int &w,
+                     const int &h,
                      int &nbr);
 
-  void test_corners(sensor_msgs::PointCloud2 &msg, const int &w, const int &h, const int &max);
+  void test_corners(sensor_msgs::PointCloud2 &msg,
+                    const int &w,
+                    const int &h,
+                    const int &max);
 
-  void test_hist(sensor_msgs::PointCloud2 &msg, const int &w, const int &h, const int &bins, const int points_nbr=0);
+  void test_hist(sensor_msgs::PointCloud2 &msg,
+                 const int &w,
+                 const int &h,
+                 const float &bin_inc,
+                 const int points_nbr=0);
 
   void compute_plane(sensor_msgs::PointCloud2 &msg,
                      sensor_msgs::PointCloud2::Ptr &final_cloud,
                      geometry_msgs::PoseStamped &pose1);
 
-  void test_temp(cv_bridge::CvImagePtr cv_ptr, const int &w, const int &h);
+  void test_temp(cv_bridge::CvImagePtr cv_ptr,
+                 const int &w,
+                 const int &h);
 
 private:
 
@@ -35,10 +45,16 @@ private:
 
   float compute_hist(sensor_msgs::PointCloud2 &msg,
                      const std::vector<float> &mean_val,
-                     const int x_min, const int x_max,
-                     const int y_min, const int y_max,
+                     const int x_min,
+                     const int x_max,
+                     const int y_min,
+                     const int y_max,
                      const int points_nbr=0,
                      bool print=false);
+
+  float compute_mean(sensor_msgs::PointCloud2 &msg,
+                     const int &w,
+                     const int &h);
 };
 
 #endif // EVALUATE_PC_HPP

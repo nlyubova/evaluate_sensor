@@ -1,23 +1,19 @@
 #ifndef EVALUATE_HPP
 #define EVALUATE_HPP
 
-#include <ros/ros.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/image_encodings.h>
 #include <image_transport/image_transport.h>
-#include <tf/transform_listener.h>
-//#include <message_filters/subscriber.h>
+//#include <tf/transform_listener.h>
 
 #include <cv_bridge/cv_bridge.h>
 
-//#include <Eigen/Core>
-
-#include "evaluate_sensor/ardetection.hpp"
 #include "evaluate_sensor/evaluate_depth.hpp"
 #include "evaluate_sensor/evaluate_pc.hpp"
 
-#include "evaluate_sensor/arprocess.hpp"
+//#include "evaluate_sensor/ardetection.hpp"
+//#include "evaluate_sensor/arprocess.hpp"
 
 class Evaluator
 {
@@ -40,8 +36,8 @@ protected:
   ros::Publisher pub, pub_plane_norm, poses_left_pub, poses_right_pub,
   pose_left_pub, pose_right_pub;
 
-  Ardetector ar_left_, ar_right_;
-  ArProcessor ar_right;
+  //Ardetector ar_left_, ar_right_;
+  //ArProcessor ar_left, ar_right;
 
   Evaluator_depth evaluator_depth_;
   Evaluator_pc evaluator_pc_;

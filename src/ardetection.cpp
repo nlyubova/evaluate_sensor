@@ -52,23 +52,24 @@ static bool readDetectorParameters(std::string filename, cv::aruco::DetectorPara
     return true;
 }
 
-Ardetector::Ardetector(const int &dictionaryId, const cv::Scalar &color):
-  refindStrategy(true),
-  squaresX(2),//5),
-  squaresY(2),//7),
-  markerSize(18.0f),
-  squareLength(50.0f), //40.0f),
-  markerLength(40.0f), //30.0f),
-  margins(squareLength - markerLength),
-  axisLength(0.5f * ((float)std::min(squaresX, squaresY) * (squareLength))),
-  dictionaryId_(dictionaryId),//cv::aruco::DICT_4X4_50),
-  borderBits(1),
-  imageSize(squaresX*squareLength + 2*margins, squaresY*squareLength + 2*margins),
-  showRejected(false),
-  waitTime(10), //0
-  showImage_(true),
-  color_(color),
-  frame_name_("")
+Ardetector::Ardetector(const int &dictionaryId,
+                       const cv::Scalar &color):
+    refindStrategy(true),
+    squaresX(2),//5),
+    squaresY(2),//7),
+    markerSize(18.0f),
+    squareLength(50.0f), //40.0f),
+    markerLength(40.0f), //30.0f),
+    margins(squareLength - markerLength),
+    axisLength(0.5f * ((float)std::min(squaresX, squaresY) * (squareLength))),
+    dictionaryId_(dictionaryId),//cv::aruco::DICT_4X4_50),
+    borderBits(1),
+    imageSize(squaresX*squareLength + 2*margins, squaresY*squareLength + 2*margins),
+    showRejected(false),
+    waitTime(10), //0
+    showImage_(true),
+    color_(color),
+    frame_name_("")
 {
 
   dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME(dictionaryId));
@@ -108,7 +109,8 @@ void Ardetector::createBoard()
 
   if(showImage_) {
     std::stringstream str;
-    str << "board_" << dictionaryId_ << "_" << squaresX << "x" << squaresY << "_" << squareLength << "x" << markerLength << ".png";
+    str << "board_" << dictionaryId_ << "_" << squaresX << "x"
+        << squaresY << "_" << squareLength << "x" << markerLength << ".png";
 
     cv::imshow(str.str().c_str(), boardImage);
     cv::waitKey(1);
@@ -133,7 +135,8 @@ void Ardetector::createMarker()
 
 }
 
-tf::Transform Ardetector::getPose(const cv::Vec3d &rvec, const cv::Vec3d &tvec)
+tf::Transform Ardetector::getPose(const cv::Vec3d &rvec,
+                                  const cv::Vec3d &tvec)
 {
   //transform rotation
   cv::Mat rvec1 = (cv::Mat_<float>(1, 3) <<
@@ -152,18 +155,17 @@ tf::Transform Ardetector::getPose(const cv::Vec3d &rvec, const cv::Vec3d &tvec)
   return transform;
 }
 
-bool Ardetector::detectMarkers(cv_bridge::CvImagePtr &img, tf::Transform &transform)
+bool Ardetector::detectMarkers(cv_bridge::CvImagePtr &img,
+                               tf::Transform &transform)
 {
   std::vector< int > markerIds;
   std::vector< std::vector< cv::Point2f > > markerCorners, rejectedMarkers;
   std::vector< cv::Vec3d > rvecs, tvecs;
 
-  //std::cout << " **** 138" << detectorParams.adaptiveThreshWinSizeMax << " " << detectorParams.adaptiveThreshWinSizeMin << std::endl;
-
   // 1- detect markers
   cv::aruco::detectMarkers(img->image, dictionary, markerCorners, markerIds, detectorParams, rejectedMarkers);
 
-  //std::cout << "+++++++++++++++markerIds.size() = " << markerIds.size() << " " << camMatrix_.total() << std::endl;
+  //std::cout << "markerIds.size() = " << markerIds.size() << " " << camMatrix_.total() << std::endl;
 
   if(showRejected && rejectedMarkers.size() > 0)
     cv::aruco::drawDetectedMarkers(img->image, rejectedMarkers, cv::noArray(), cv::Scalar(100, 0, 255));
@@ -204,7 +206,7 @@ void Ardetector::detectBoard(cv_bridge::CvImagePtr &img)
   // 1- detect markers
   cv::aruco::detectMarkers(img->image, dictionary, markerCorners, markerIds, detectorParams, rejectedMarkers);
 
-  std::cout << "+++++++++++++++markerIds.size() = " << markerIds.size() << std::endl;
+  std::cout << "markerIds.size() = " << markerIds.size() << std::endl;
 
   // refind strategy to detect more markers
   if(refindStrategy)
@@ -226,7 +228,7 @@ void Ardetector::detectBoard(cv_bridge::CvImagePtr &img)
   if ((markerIds.size() > 0) && (camMatrix_.total() != 0))
       validPose = cv::aruco::estimatePoseCharucoBoard(charucoCorners, charucoIds, board,
                                                   camMatrix_, distCoeffs_, rvecs, tvecs);
-  std::cout << "+++++++++++++++validPose= " << validPose << std::endl;
+  std::cout << "validPose= " << validPose << std::endl;
 
   // 3- draw results
   /*cv::Mat imageCopy;

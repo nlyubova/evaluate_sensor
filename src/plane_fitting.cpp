@@ -2,7 +2,6 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/sample_consensus/sac_model_plane.h>
 #include <pcl/filters/extract_indices.h>
-//#include <pcl_msgs/ModelCoefficients.h>
 
 #include <opencv2/opencv.hpp>
 
@@ -15,7 +14,8 @@ Plane_fitting::Plane_fitting()
   tiltingFrameId_ = "CameraDepth_frame";
 }
 
-static void convertFromRosTf(const tf::Transform& tfTransform, cv::Mat &rotation, cv::Vec3d &up) //, HomogeneousTransformation<PrimType_, Position_, Rotation_>& pose
+static void convertFromRosTf(const tf::Transform& tfTransform,
+                             cv::Mat &rotation, cv::Vec3d &up)
 {
   const tf::Vector3& rowX = tfTransform.getBasis().getRow(0);
   const tf::Vector3& rowY = tfTransform.getBasis().getRow(1);
@@ -33,7 +33,8 @@ static void convertFromRosTf(const tf::Transform& tfTransform, cv::Mat &rotation
   ROS_INFO_STREAM("transform " << rotation << std::endl << up);
 }
 
-bool Plane_fitting::computeRotation(const Eigen::Vector3d& surfaceNormal, const std::string& frameId)
+bool Plane_fitting::computeRotation(const Eigen::Vector3d& surfaceNormal,
+                                    const std::string& frameId)
 {
   // Get surface normal in tilting frame.
   tf::StampedTransform transform;
@@ -47,25 +48,6 @@ bool Plane_fitting::computeRotation(const Eigen::Vector3d& surfaceNormal, const 
   cv::Mat rotation;
   cv::Vec3d up;
   convertFromRosTf(transform, rotation, up);
-
-  //kindr::poses::eigen_impl::HomogeneousTransformationPosition3RotationQuaternionD pose;
-  /*kindr::poses::eigen_impl::convertFromRosTf(transform, pose);
-  ROS_INFO_STREAM("Pose of sensor frame in tilting frame: " << pose);
-  Eigen::Vector3d surfaceNormalInTiltingFrame = pose.getRotation().rotate(surfaceNormal);
-    if (surfaceNormalInTiltingFrame.z() < 0.0) surfaceNormalInTiltingFrame = -surfaceNormalInTiltingFrame;
-  ROS_DEBUG_STREAM("Surface normal in tilting frame (" << tiltingFrameId_ << "): " << surfaceNormalInTiltingFrame.transpose());
-
-  // Compute calibration angles.
-  Eigen::Vector3d reference = Eigen::Vector3d::UnitZ();
-  kindr::rotations::eigen_impl::RotationQuaternionPD rotation;
-  rotation.setFromVectors(surfaceNormalInTiltingFrame, reference);
-
-  std::cout << "===============================" << std::endl;
-  std::cout << "Quaternion (qx, qy, qz, qw): " << rotation.x() << ", " << rotation.y() << ", " << rotation.z() << ", " << rotation.w() << std::endl;
-  kindr::rotations::eigen_impl::EulerAnglesYprPD euler(rotation);
-  Eigen::Vector3d eulerVector = euler.getUnique().toImplementation() / M_PI * 180.0;
-  std::cout << "Pitch: " << eulerVector(1) << " deg, Roll: " << eulerVector(2) << " deg" << std::endl; // Yaw should be 0 up to numerical errors.
-  std::cout << "===============================" << std::endl;*/
 
   return true;
 }
@@ -118,13 +100,18 @@ void toEuler(double x,double y,double z,double angle) {
 }
 
 /**
- * If the equation of the plane is ax+by+cz+d=0, the pose (R,t) is such that it takes the horizontal plane (z=0)
+ * If the equation of the plane is ax+by+cz+d=0,
+ * the pose (R,t) is such that it takes the horizontal plane (z=0)
  * to the current equation
  */
 void
-getPlaneTransform(const pcl::ModelCoefficients& plane_coefficients, cv::Matx33f& rotation, cv::Vec3f& translation)
+getPlaneTransform(const pcl::ModelCoefficients& plane_coefficients,
+                  cv::Matx33f& rotation,
+                  cv::Vec3f& translation)
 {
-  cv::Vec3d z(plane_coefficients.values[0], plane_coefficients.values[1], plane_coefficients.values[2]);
+  cv::Vec3d z(plane_coefficients.values[0],
+          plane_coefficients.values[1],
+          plane_coefficients.values[2]);
 
   translation = cv::Vec3d(-plane_coefficients.values[0]* plane_coefficients.values[3],
       -plane_coefficients.values[1]* plane_coefficients.values[3],
@@ -213,7 +200,8 @@ void Plane_fitting::compute_plane(pcl::PointCloud<pcl::PointXYZ> cloud,
   extract.setIndices (inliers);
   extract.setNegative (false);
   extract.filter (*cloud_p);
-  std::cerr << "PointCloud representing the planar component: " << cloud_p->width * cloud_p->height << " data points." << std::endl;
+  std::cerr << "PointCloud representing the planar component: "
+            << cloud_p->width * cloud_p->height << " data points." << std::endl;
 
   // conbert to sensormsg type
   pcl::toROSMsg (*cloud_p, *final_cloud);
@@ -274,16 +262,6 @@ void Plane_fitting::compute_plane(pcl::PointCloud<pcl::PointXYZ> cloud,
 
   //----------------------------------------------
 
-  /*ROS_INFO_STREAM("Surface normal in sensor frame (" << msg.header.frame_id << "): " << z1.transpose());
-  if (!computeRotation(normal, msg.header.frame_id))
-    return;*/
-
-  /*Eigen::Affine3f t=Eigen::Affine3f();
-  float roll = 0.0f;
-  float pitch = 0.0f;
-  float yaw = 0.0f;
-  pcl::getEulerAngles();*/
-
   double a, b, c, d;
   a = plan_coeff.values[0];
   b = plan_coeff.values[1];
@@ -304,7 +282,8 @@ void Plane_fitting::compute_plane(pcl::PointCloud<pcl::PointXYZ> cloud,
     dst_inliers_mean = dst_inliers_mean / distances.size();
     depth_mean = depth_mean / distances.size();
     // Compute standard deviation from plan for inliers
-    for (std::vector<double>::const_iterator it = distances.begin(); it != distances.end(); ++it) {
+    for (std::vector<double>::const_iterator it = distances.begin();
+         it != distances.end(); ++it) {
       dst_inliers_deviation += std::pow((*it - dst_inliers_mean), 2);
     }
     dst_inliers_deviation = std::sqrt(dst_inliers_deviation / (float)distances.size());
@@ -323,7 +302,8 @@ void Plane_fitting::compute_plane(pcl::PointCloud<pcl::PointXYZ> cloud,
     }
     dst_full_mean = dst_full_mean / distances.size();
     // Compute standard deviation from plan for all pixels
-    for (std::vector<double>::const_iterator it = distances.begin(); it != distances.end(); ++it) {
+    for (std::vector<double>::const_iterator it = distances.begin();
+         it != distances.end(); ++it) {
       dst_full_deviation += std::pow((*it - dst_full_mean), 2);
     }
     dst_full_deviation = std::sqrt(dst_full_deviation / (float)distances.size());
@@ -342,7 +322,9 @@ void Plane_fitting::compute_plane(pcl::PointCloud<pcl::PointXYZ> cloud,
 
   std::cout <<  "PC-based Cloud size: "	<< cloud.width << "x" << cloud.height << std::endl
               << "Depth mean: " << depth_mean << std::endl
-              << "Inliers nb: " << inliers->indices.size() << ", " << inliers->indices.size()/static_cast<float>(cloud.size()) << "% Plan: "
+              << "Inliers nb: " << inliers->indices.size()
+              << ", " << inliers->indices.size()/static_cast<float>(cloud.size())
+              << "% Plan: "
               << plan_coeff.values[0] << " "
               << plan_coeff.values[1] << " "
               << plan_coeff.values[2] << " "
@@ -350,4 +332,3 @@ void Plane_fitting::compute_plane(pcl::PointCloud<pcl::PointXYZ> cloud,
               << "Inliers DistanceToPlan Mean/std: " << dst_inliers_mean << "/" << dst_inliers_deviation << std::endl
               << "All pixels DistanceToPlan Mean/std: " << dst_full_mean << "/" << dst_full_deviation << " averaged " << dst_mean << "/" << dst_std << std::endl;
 }
-

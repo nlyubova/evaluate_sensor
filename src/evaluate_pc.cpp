@@ -23,11 +23,11 @@ void Evaluator_pc::compute_plane(sensor_msgs::PointCloud2 &msg,
 }
 
 float Evaluator_pc::compute_hist(sensor_msgs::PointCloud2 &msg,
-                              const std::vector<float> &mean_val,
-                              const int x_min, const int x_max,
-                              const int y_min, const int y_max,
-                              const int points_nbr,
-                              bool print)
+                                 const std::vector<float> &mean_val,
+                                 const int x_min, const int x_max,
+                                 const int y_min, const int y_max,
+                                 const int points_nbr,
+                                 bool print)
 {
   std::vector<int> mean_hist(mean_val.size()-1, 0);
 
@@ -54,7 +54,7 @@ float Evaluator_pc::compute_hist(sensor_msgs::PointCloud2 &msg,
 
   if (print)
   {
-    std::cout << "Hist counts: ";
+    std::cout << "Histogram counts: ";
     for (std::vector<int>::iterator it=mean_hist.begin(); it!=mean_hist.end(); ++it)
       if (points_nbr > 0)
         std::cout << *it/static_cast<float>(points_nbr) << " ";
@@ -95,10 +95,39 @@ float Evaluator_pc::compute_hist(sensor_msgs::PointCloud2 &msg,
   return mean_temp;
 }
 
-float Evaluator_pc::compute_stat(sensor_msgs::PointCloud2 &msg,
-                              const int &w, const int &h,
-                              int &nbr)
+float Evaluator_pc::compute_mean(sensor_msgs::PointCloud2 &msg,
+                                 const int &w,
+                                 const int &h)
 {
+  float mean(0.0f);
+  int pixel_nbr(w*h);
+  int nbr(0);
+
+  sensor_msgs::PointCloud2Iterator<float> iter_z(msg, "z");
+  for(int count=0; count < pixel_nbr; ++count, ++iter_z)
+  {
+    float tmp = *iter_z;
+
+    if (tmp > 0.0f)
+    {
+      mean += tmp;
+      ++nbr;
+    }
+  }
+
+  //finalize the mean
+  if (nbr > 0)
+    mean /= static_cast<float>(nbr);
+
+  return mean;
+}
+
+float Evaluator_pc::compute_stat(sensor_msgs::PointCloud2 &msg,
+                                 const int &w,
+                                 const int &h,
+                                 int &nbr)
+{
+  //compute mean, min, max
   float mean = 0.0f;
   float min = std::numeric_limits<float>::max();
   float max = 0.0f;
@@ -120,10 +149,11 @@ float Evaluator_pc::compute_stat(sensor_msgs::PointCloud2 &msg,
     }
   }
 
-  //finalize basic statistics: mean, min, max
+  //finalize the mean
   if (nbr > 0)
     mean /= static_cast<float>(nbr);
 
+  //compute variance
   float var = 0.0f;
   iter_z = sensor_msgs::PointCloud2Iterator<float>(msg, "z");
   for (int count = 0; count < pixel_nbr; ++count, ++iter_z)
@@ -135,12 +165,17 @@ float Evaluator_pc::compute_stat(sensor_msgs::PointCloud2 &msg,
   }
   var /= static_cast<float>(nbr);
 
-  //std::cout << "- - - - - time mean var nbr min max " << std::endl;
-  std::cout << "stat from_PC: " << mean << " " << var << " " << nbr << " " << min << " " << max << std::endl;
+  //std::cout << "time mean var nbr min max " << std::endl;
+  std::cout << "stat from_PC: " << mean << " " << var << " "
+            << nbr << " " << min << " " << max << std::endl;
+
   return max;
 }
 
-void Evaluator_pc::test_corners(sensor_msgs::PointCloud2 &msg, const int &w, const int &h, const int &max)
+void Evaluator_pc::test_corners(sensor_msgs::PointCloud2 &msg,
+                                const int &w,
+                                const int &h,
+                                const int &max)
 {
   //2) compute mean at image corners
   std::vector<float> mean_val;
@@ -170,16 +205,23 @@ void Evaluator_pc::test_corners(sensor_msgs::PointCloud2 &msg, const int &w, con
 }
 
 void Evaluator_pc::test_hist(sensor_msgs::PointCloud2 &msg,
-                          const int &w, const int &h,
-                          const int &bins,
-                          const int points_nbr)
+                             const int &w,
+                             const int &h,
+                             const float &bin_inc,
+                             const int points_nbr)
 {
   //compute the histogram for the whole image
   std::vector<float> test_val;
-  test_val.resize(45);
-  float val = 0.1f;
+  float val_min(0.1f);
+  float val_max(std::ceil(compute_mean(msg, w, h)) + 1.0f);
+  float val(val_min);
+  test_val.resize(static_cast<float>(val_max - val_min) / static_cast<float>(bin_inc) + 1);
+
   for (int i=0; i<test_val.size();++i)
-    test_val[i] = val + (1.0f-val) * static_cast<float>(i)/static_cast<float>(test_val.size());
+  {
+    test_val[i] = val;
+    val += bin_inc;
+  }
   std::cout << "Histogram bins: ";
   for (std::vector<float>::iterator it=test_val.begin(); it!=test_val.end(); ++it)
     std::cout << *it << " ";
@@ -189,4 +231,3 @@ void Evaluator_pc::test_hist(sensor_msgs::PointCloud2 &msg,
   compute_hist(msg, test_val, 0, w, 0, h, points_nbr, true);
   std::cout << std::endl;
 }
-
