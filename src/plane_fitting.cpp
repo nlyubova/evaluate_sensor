@@ -15,7 +15,8 @@ Plane_fitting::Plane_fitting()
 }
 
 static void convertFromRosTf(const tf::Transform& tfTransform,
-                             cv::Mat &rotation, cv::Vec3d &up)
+                             cv::Mat &rotation,
+                             cv::Vec3d &up)
 {
   const tf::Vector3& rowX = tfTransform.getBasis().getRow(0);
   const tf::Vector3& rowY = tfTransform.getBasis().getRow(1);
@@ -67,7 +68,8 @@ void normalize_vector(T & x, T&y, T&z)
 }
 
 void toEuler(double x,double y,double z,double angle) {
-  std::cout << "axis-angle " << x << " " << y << " " << z << " " << angle << std::endl;
+  std::cout << "axis-angle " << x << " " << y << " " << z
+            << " " << angle << std::endl;
   double roll = 0.0;
   double pitch = 0.0;
   double yaw = 0.0;
@@ -113,9 +115,10 @@ getPlaneTransform(const pcl::ModelCoefficients& plane_coefficients,
           plane_coefficients.values[1],
           plane_coefficients.values[2]);
 
-  translation = cv::Vec3d(-plane_coefficients.values[0]* plane_coefficients.values[3],
-      -plane_coefficients.values[1]* plane_coefficients.values[3],
-      -plane_coefficients.values[2]* plane_coefficients.values[3]);
+  translation = cv::Vec3d(
+              -plane_coefficients.values[0] * plane_coefficients.values[3],
+              -plane_coefficients.values[1] * plane_coefficients.values[3],
+              -plane_coefficients.values[2] * plane_coefficients.values[3]);
 
   //try to align the x axis with the x axis of the original frame
   //or the y axis if z and x are too close too each other
@@ -169,8 +172,8 @@ maxtrixToPose(const cv::Matx33f &m)
 }
 
 void Plane_fitting::compute_plane(pcl::PointCloud<pcl::PointXYZ> cloud,
-                                 sensor_msgs::PointCloud2::Ptr &final_cloud,
-                                 geometry_msgs::PoseStamped &pose1)
+                                  sensor_msgs::PointCloud2::Ptr &final_cloud,
+                                  geometry_msgs::PoseStamped &pose1)
 {
   // Create the segmentation object
   pcl::SACSegmentation<pcl::PointXYZ> seg;
@@ -329,6 +332,9 @@ void Plane_fitting::compute_plane(pcl::PointCloud<pcl::PointXYZ> cloud,
               << plan_coeff.values[1] << " "
               << plan_coeff.values[2] << " "
               << plan_coeff.values[3] << std::endl
-              << "Inliers DistanceToPlan Mean/std: " << dst_inliers_mean << "/" << dst_inliers_deviation << std::endl
-              << "All pixels DistanceToPlan Mean/std: " << dst_full_mean << "/" << dst_full_deviation << " averaged " << dst_mean << "/" << dst_std << std::endl;
+              << "Inliers DistanceToPlan Mean/std: " << dst_inliers_mean
+              << "/" << dst_inliers_deviation << std::endl
+              << "All pixels DistanceToPlan Mean/std: " << dst_full_mean
+              << "/" << dst_full_deviation << " averaged " << dst_mean
+              << "/" << dst_std << std::endl;
 }

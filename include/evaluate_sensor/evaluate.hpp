@@ -5,15 +5,11 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/image_encodings.h>
 #include <image_transport/image_transport.h>
-//#include <tf/transform_listener.h>
 
 #include <cv_bridge/cv_bridge.h>
 
 #include "evaluate_sensor/evaluate_depth.hpp"
 #include "evaluate_sensor/evaluate_pc.hpp"
-
-//#include "evaluate_sensor/ardetection.hpp"
-//#include "evaluate_sensor/arprocess.hpp"
 
 class Evaluator
 {
@@ -24,8 +20,6 @@ public:
   void process_pc(const sensor_msgs::PointCloud2& msg);
   void process_cameraInfo(const sensor_msgs::CameraInfoConstPtr& infoMsg);
 
-  void test_temp(cv_bridge::CvImagePtr cv_ptr, const int &w, const int &h);
-
 protected:
   ros::NodeHandle nh_;
   image_transport::ImageTransport it_;
@@ -35,9 +29,6 @@ protected:
 
   ros::Publisher pub, pub_plane_norm, poses_left_pub, poses_right_pub,
   pose_left_pub, pose_right_pub;
-
-  //Ardetector ar_left_, ar_right_;
-  //ArProcessor ar_left, ar_right;
 
   Evaluator_depth evaluator_depth_;
   Evaluator_pc evaluator_pc_;

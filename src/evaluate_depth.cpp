@@ -28,12 +28,12 @@ void Evaluator_depth::compute_plane(cv_bridge::CvImagePtr img,
 }
 
 float Evaluator_depth::compute_hist(cv_bridge::CvImagePtr img,
-                              const std::vector<float> &mean_val,
-                              const int x_min,
-                              const int x_max,
-                              const int y_min,
-                              const int y_max,
-                              bool print)
+                                    const std::vector<float> &mean_val,
+                                    const int x_min,
+                                    const int x_max,
+                                    const int y_min,
+                                    const int y_max,
+                                    bool print)
 {
   std::vector<int> mean_hist(mean_val.size()-1, 0);
 
@@ -220,7 +220,8 @@ void Evaluator_depth::test_hist(cv_bridge::CvImagePtr cv_ptr,
   test_val.resize(bins);
   float val = 0.1f;
   for (int i=0; i<test_val.size();++i)
-    test_val[i] = val + (1.0f-val) * static_cast<float>(i)/static_cast<float>(test_val.size());
+    test_val[i] = val + (1.0f-val) *
+            static_cast<float>(i)/static_cast<float>(test_val.size());
   std::cout << "Histogram bins: ";
   for (std::vector<float>::iterator it=test_val.begin(); it!=test_val.end(); ++it)
     std::cout << *it << " ";
@@ -280,7 +281,7 @@ void Evaluator_depth::test_temp(cv_bridge::CvImagePtr img,
     if (noiseTemp_.size() > 0)
       noise /= static_cast<float>(noiseTemp_.size());
 
-    std::cout << "Temporal noise per pixel,m= " << noise << " at iteration " << noiseTemp_.size() << std::endl;
+    std::cout << "Temporal noise per pixel, m= " << noise
+              << " at iteration " << noiseTemp_.size() << std::endl;
   }
 }
-

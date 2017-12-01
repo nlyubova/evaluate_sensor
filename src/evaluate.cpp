@@ -19,23 +19,13 @@ void Evaluator::process_cameraInfo(const sensor_msgs::CameraInfoConstPtr& infoMs
                         infoMsg->D[3],
                         infoMsg->D[4]);
 
-  //ar_left_.setCamInfo(camMatrix, distCoeffs, infoMsg->header.frame_id);
-  //ar_right_.setCamInfo(camMatrix, distCoeffs, infoMsg->header.frame_id);
-
-//  ar_left.setCamInfo(camMatrix, distCoeffs, cv::Size(infoMsg->height, infoMsg->width), infoMsg->header.frame_id);
-//  ar_right.setCamInfo(camMatrix, distCoeffs, cv::Size(infoMsg->height, infoMsg->width), infoMsg->header.frame_id);
-
-  //unsubscribe from teh topic
+  //unsubscribe from the topic
   sub_camera_info_.shutdown();
 }
 
 Evaluator::Evaluator():
   nh_("~"),
   it_(nh_),
-  //ar_left(),
-  //ar_right(),
-  //ar_left_(cv::aruco::DICT_4X4_50, cv::Scalar(0, 255, 0)),
-  //ar_right_(cv::aruco::DICT_5X5_50, cv::Scalar(0, 0, 255)),
   processedDepth_(0),
   processedPc_(0),
   processMax_(10)
@@ -56,7 +46,6 @@ Evaluator::Evaluator():
   std::string detector_params_file = "/config/detector_params.yml";
   nh_.getParam("detector_params_file", detector_params_file);
   ROS_INFO_STREAM("detector_params_file: " << detector_params_file);
-  //ardetector.init(detector_params_file);
 
   std::string topic_depth_img = "/camera/depth/image_raw";
   nh_.getParam("depth_img_topic", topic_depth_img);
@@ -68,14 +57,14 @@ Evaluator::Evaluator():
   ROS_INFO_STREAM("topic_rgb_img: " << topic_rgb_img);
   sub_img_rgb_ = it_.subscribe(topic_rgb_img.c_str(), 10, &Evaluator::process_rgb, this);
 
-  std::string topic_pointcloud = "/camera/depth/points";
+/*  std::string topic_pointcloud = "/camera/depth/points";
   nh_.getParam("pointcloud_topic", topic_pointcloud);
   ROS_INFO_STREAM("pointcloud_topic: " << topic_pointcloud);
   sub_pc_ = nh_.subscribe(topic_pointcloud.c_str(), 10, &Evaluator::process_pc, this);
-
+*/
   std::string topic_camera_info = "/camera/depth/camera_info";
   nh_.getParam("camera_info_topic", topic_camera_info);
-  ROS_INFO_STREAM("camera_info_topic: " << topic_camera_info);
+  ROS_INFO_STREAM("camera_info_topic: " << topic_camera_info << "\n");
   sub_camera_info_ = nh_.subscribe(topic_camera_info.c_str(), 1, &Evaluator::process_cameraInfo, this);
 }
 
@@ -91,43 +80,6 @@ void Evaluator::process_rgb(const sensor_msgs::ImageConstPtr& img)
    ROS_ERROR("cv_bridge exception: %s", e.what());
    return;
   }
-
-  //geometry_msgs::PoseArray poses_left, poses_right;
-  geometry_msgs::PoseStamped pose;
-  pose.header.stamp = ros::Time::now();
-  pose.header.frame_id = img->header.frame_id;
-  /*geometry_msgs::PoseStamped pose_left(pose), pose_right(pose);
-
-  tf::Transform transform_left;*/
-  /*if(ar_left_.detectMarkers(cv_ptr, transform_left))
-  {
-    tf::poseTFToMsg(transform_left, pose_left.pose);
-    pose_left_pub.publish(pose_left);
-  }*/
-/*  if(ar_left.detectMarkers(cv_ptr, transform_left))
-  {
-    tf::poseTFToMsg(transform_left, pose_left.pose);
-    pose_left_pub.publish(pose_left);
-  }*/
-
-  /*tf::Transform transform_right;
-  if(ar_right_.detectMarkers(cv_ptr, transform_right))
-  {
-    tf::poseTFToMsg(transform_right, pose_right.pose);
-    pose_right_pub.publish(pose_right);
-  }
-  if(ar_right.detectMarkers(cv_ptr, transform_right))
-  {
-    tf::poseTFToMsg(transform_right, pose_right.pose);
-    pose_right_pub.publish(pose_right);
-  }*/
-
-  cv::imshow("AR detection", cv_ptr->image);
-  cv::waitKey(1);
-
-  //std::cout << transform_left.getOrigin() - transform_right.getOrigin() << std::endl;
-
-  //ardetector.detectBoard(cv_ptr);
 }
 
 void Evaluator::process_pc(const sensor_msgs::PointCloud2& msg)
@@ -145,12 +97,15 @@ void Evaluator::process_pc(const sensor_msgs::PointCloud2& msg)
 
   //1) compute basic statistics: mean, min, max
   float max = evaluator_pc_.compute_stat(msg2, w, h, points_nbr);
+  std::cout << std::endl;
 
   //2) compute mean at image corners
   evaluator_pc_.test_corners(msg2, w, h, max);
+  std::cout << std::endl;
 
   //3) compute the histogram for the whole image
   evaluator_pc_.test_hist(msg2, w, h, 0.02f, points_nbr);
+  std::cout << std::endl << std::endl;
 
   //4) fitting a plane
   /*sensor_msgs::PointCloud2::Ptr final_cloud;
@@ -170,7 +125,8 @@ void Evaluator::process_depth(const sensor_msgs::ImageConstPtr& msg)
   else
     sub_img_depth_.shutdown();
 
-  std::cout << "Depth image type, size: " << msg->encoding << " " << msg->width << "x" << msg->height << std::endl;
+  std::cout << "Depth image type, size: " << msg->encoding
+            << " " << msg->width << "x" << msg->height << std::endl;
 
   cv::Mat out;
   out.create(cv::Size(msg->height, msg->width), CV_32FC1);
@@ -224,21 +180,23 @@ void Evaluator::process_depth(const sensor_msgs::ImageConstPtr& msg)
 
   //1) compute basic statistics: mean, min, max
   float max = evaluator_depth_.compute_stat(cv_ptr, w, h);
+  std::cout << std::endl;
 
   //2) compute mean at image corners
   evaluator_depth_.test_corners(cv_ptr, w, h, max);
+  std::cout << std::endl;
 
   //3) compute the histogram for the whole image
   evaluator_depth_.test_hist(cv_ptr, w, h, 45);
+  std::cout << std::endl;
 
   //4) fitting a plane
-/*  sensor_msgs::PointCloud2::Ptr final_cloud;
-  geometry_msgs::PoseStamped pose;
-  pose.header.frame_id = msg->header.frame_id;
-  evaluator_depth_.compute_plane(cv_ptr, final_cloud, pose);
-*/
+  //sensor_msgs::PointCloud2::Ptr final_cloud;
+  //geometry_msgs::PoseStamped pose;
+  //pose.header.frame_id = msg->header.frame_id;
+  //evaluator_depth_.compute_plane(cv_ptr, final_cloud, pose);
 
   //5) compute temporal noise
   evaluator_depth_.test_temp(cv_ptr, w, h);
+  std::cout << std::endl << std::endl;
 }
-

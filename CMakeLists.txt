@@ -11,25 +11,17 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   geometry_msgs
   tf
-  #opencv_candidate
-  #aruco
 )
 
 find_package(Eigen REQUIRED)
 
-#find_package(OpenCV 3.0.0 REQUIRED)
+find_package(OpenCV REQUIRED)
 #message(STATUS "OpenCV version: ${OpenCV_VERSION}")
-#message(STATUS "OpenCV libraries: ${OpenCV_LIBS}")
-#message(STATUS "OpenCV include path: ${OpenCV_INCLUDE_DIRS}")
-
-#find_package(Aruco REQUIRED )
-#message(STATUS "Acruco version: ${Aruco_LIBS}")
 
 catkin_package(
   INCLUDE_DIRS include
   CATKIN_DEPENDS roscpp cv_bridge image_transport geometry_msgs #opencv_candidate
   DEPENDS OpenCV
-#  LIBRARIES aruco
 )
 
 ###########
@@ -55,14 +47,10 @@ SET(SRC
   src/evaluate_pc.cpp
   src/evaluate_depth.cpp
   src/plane_fitting.cpp
-  #src/ardetection.cpp
-  #src/arprocess.cpp
   include/evaluate_sensor/evaluate.hpp
   include/evaluate_sensor/evaluate_depth.hpp
   include/evaluate_sensor/evaluate_pc.hpp
   include/evaluate_sensor/plane_fitting.hpp
-  #include/evaluate_sensor/ardetection.hpp
-  #include/evaluate_sensor/arprocess.hpp
 )
 
 add_executable(${PROJECTNAME} ${SRC})
@@ -72,5 +60,4 @@ target_link_libraries(${PROJECTNAME}
    ${Boost_LIBRARIES}
    ${PCL_LIBRARIES}
    ${OpenCV_LIBS}
-   #${aruco_LIBS}
  )
